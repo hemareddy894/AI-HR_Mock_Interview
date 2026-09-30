@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Setup — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links"><a href="/analyzing"><i class="fas fa-arrow-left"></i> Back</a></div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container-sm" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="progress-steps">
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> Select Role</div>
+      <div class="step-divider"></div>
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> Upload Resume</div>
+      <div class="step-divider"></div>
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> AI Analysis</div>
+      <div class="step-divider"></div>
+      <div class="step active"><div class="step-num">4</div> Interview</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">5</div> Report</div>
+    </div>
+
+    <div class="section-heading">
+      <h2>Interview Setup</h2>
+      <p>Role: <strong style="color:var(--accent2)">{{ role_name }}</strong>
+        {% if profile.name %} &bull; Candidate: <strong style="color:var(--accent3)">{{ profile.name }}</strong>{% endif %}
+      </p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="glass" style="padding:2rem;margin-bottom:1.25rem;">
+      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:1rem;">Interview Mode</h3>
+      <div class="setup-grid" id="modeGrid">
+        <div class="setup-option selected" data-val="Basic HR" onclick="pick(this,'modeGrid')">
+          <i class="fas fa-comments"></i><span>Basic HR</span><small>Standard questions</small>
+        </div>
+        <div class="setup-option" data-val="Placement HR" onclick="pick(this,'modeGrid')">
+          <i class="fas fa-graduation-cap"></i><span>Placement HR</span><small>Campus placement</small>
+        </div>
+        <div class="setup-option" data-val="Behavioral HR" onclick="pick(this,'modeGrid')">
+          <i class="fas fa-brain"></i><span>Behavioral HR</span><small>STAR-based</small>
+        </div>
+        <div class="setup-option" data-val="Stress HR" onclick="pick(this,'modeGrid')">
+          <i class="fas fa-fire"></i><span>Stress HR</span><small>Challenging</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass" style="padding:2rem;margin-bottom:1.25rem;">
+      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:1rem;">Difficulty</h3>
+      <div class="setup-grid" id="diffGrid">
+        <div class="setup-option" data-val="Easy" onclick="pick(this,'diffGrid')">
+          <i class="fas fa-seedling"></i><span>Easy</span><small>Beginner friendly</small>
+        </div>
+        <div class="setup-option selected" data-val="Medium" onclick="pick(this,'diffGrid')">
+          <i class="fas fa-balance-scale"></i><span>Medium</span><small>Standard level</small>
+        </div>
+        <div class="setup-option" data-val="Hard" onclick="pick(this,'diffGrid')">
+          <i class="fas fa-mountain"></i><span>Hard</span><small>Challenging</small>
+        </div>
+        <div class="setup-option" data-val="Adaptive" onclick="pick(this,'diffGrid')">
+          <i class="fas fa-magic"></i><span>Adaptive</span><small>AI adjusts</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass" style="padding:2rem;margin-bottom:1.25rem;">
+      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:1rem;">Interview Length</h3>
+      <div class="setup-grid" id="lengthGrid">
+        <div class="setup-option" data-val="short" onclick="pick(this,'lengthGrid')">
+          <i class="fas fa-bolt"></i><span>Short</span><small>5 questions</small>
+        </div>
+        <div class="setup-option selected" data-val="standard" onclick="pick(this,'lengthGrid')">
+          <i class="fas fa-list"></i><span>Standard</span><small>8–10 questions</small>
+        </div>
+        <div class="setup-option" data-val="long" onclick="pick(this,'lengthGrid')">
+          <i class="fas fa-scroll"></i><span>Long</span><small>12–15 questions</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass" style="padding:2rem;margin-bottom:2rem;">
+      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:1rem;">Interviewer Style</h3>
+      <div class="setup-grid" id="styleGrid">
+        <div class="setup-option" data-val="Friendly" onclick="pick(this,'styleGrid')">
+          <i class="fas fa-smile"></i><span>Friendly</span><small>Warm &amp; supportive</small>
+        </div>
+        <div class="setup-option selected" data-val="Professional" onclick="pick(this,'styleGrid')">
+          <i class="fas fa-user-tie"></i><span>Professional</span><small>Formal tone</small>
+        </div>
+        <div class="setup-option" data-val="Strict" onclick="pick(this,'styleGrid')">
+          <i class="fas fa-gavel"></i><span>Strict</span><small>No-nonsense</small>
+        </div>
+        <div class="setup-option" data-val="Challenging" onclick="pick(this,'styleGrid')">
+          <i class="fas fa-chess"></i><span>Challenging</span><small>Pushes limits</small>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="btn btn-primary btn-lg" id="startBtn" onclick="startInterview()">
+        <i class="fas fa-play"></i> Start Interview
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+function pick(el, gridId) {
+  document.querySelectorAll(`#${gridId} .setup-option`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getSelected(gridId) {
+  const sel = document.querySelector(`#${gridId} .setup-option.selected`);
+  return sel ? sel.dataset.val : null;
+}
+
+function startInterview() {
+  const btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+
+  fetch('/api/start-interview', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      mode: getSelected('modeGrid'),
+      difficulty: getSelected('diffGrid'),
+      length: getSelected('lengthGrid'),
+      style: getSelected('styleGrid')
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '/interview';
+    } else {
+      showAlert(data.error || 'Could not start interview.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Interview';
+    }
+  })
+  .catch(() => {
+    showAlert('Network error.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Start Interview';
+  });
+}
+
+function showAlert(msg, type) {
+  const box = document.getElementById('alertBox');
+  box.innerHTML = `<div class="alert alert-${type === 'error' ? 'error' : 'info'}"><i class="fas fa-exclamation-circle"></i> ${msg}</div>`;
+}
+</script>
+</body>
+</html>

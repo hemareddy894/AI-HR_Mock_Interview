@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practice Weak Areas — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links">
+    <a href="/report/{{ interview_id }}"><i class="fas fa-arrow-left"></i> Back to Report</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container-sm" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="section-heading">
+      <h2>Practice Weak Areas</h2>
+      <p>Targeted questions to strengthen your weak spots</p>
+    </div>
+
+    {% if weak_areas %}
+    <div class="glass" style="padding:1.25rem;margin-bottom:1.5rem;">
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">Focusing on:</p>
+      <div class="tag-list">
+        {% for area in weak_areas %}
+        <span class="tag">{{ area }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div id="questionsContainer">
+      <div class="glass" style="padding:3rem;text-align:center;">
+        <div class="analyze-spinner" style="width:50px;height:50px;margin:0 auto 1rem;"></div>
+        <p style="color:var(--text-muted)">Loading practice questions...</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;">
+      <a href="/select-role" class="btn btn-primary">
+        <i class="fas fa-play"></i> Start New Interview
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+fetch('/api/weak-area-questions/{{ interview_id }}')
+.then(r => r.json())
+.then(data => {
+  const container = document.getElementById('questionsContainer');
+  if (!data.questions || !data.questions.length) {
+    container.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> No practice questions available.</div>';
+    return;
+  }
+  container.innerHTML = data.questions.map((q, i) => `
+    <div class="glass qa-card" style="margin-bottom:1rem;">
+      <div class="question-label">Practice Question ${i+1}</div>
+      <div class="question-text" style="margin-bottom:0.75rem;">${q.text}</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);">
+        <i class="fas fa-tag"></i> ${q.category || 'General'}
+        &nbsp;&bull;&nbsp;
+        <i class="fas fa-info-circle"></i> ${q.reason || ''}
+      </div>
+    </div>
+  `).join('');
+})
+.catch(() => {
+  document.getElementById('questionsContainer').innerHTML =
+    '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> Could not load questions.</div>';
+});
+</script>
+</body>
+</html>

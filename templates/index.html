@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI Mock HR Interview — Practice smarter. Speak confidently. Get interview-ready with personalized AI-powered voice interviews.">
+<title>AI Mock HR Interview</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+.hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem 4rem; }
+.hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; border-radius: 50px; background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.3); font-size: 0.8rem; color: var(--accent2); margin-bottom: 1.5rem; }
+.hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.25rem; }
+.hero h1 span { background: linear-gradient(135deg, var(--accent1) 0%, var(--accent3) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-sub { font-size: clamp(1rem, 2vw, 1.25rem); color: var(--text-secondary); max-width: 600px; margin: 0 auto 1rem; line-height: 1.7; }
+.hero-desc { font-size: 0.92rem; color: var(--text-muted); max-width: 560px; margin: 0 auto 2.5rem; line-height: 1.7; }
+.hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.hero-stats { display: flex; gap: 2.5rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--accent1), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.features-section { padding: 5rem 1.5rem; }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.feature-card { padding: 2rem; border-radius: var(--radius); background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(20px); transition: var(--transition); }
+.feature-card:hover { transform: translateY(-4px); border-color: rgba(108,99,255,0.4); box-shadow: var(--shadow-lg); }
+.feature-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(56,189,248,0.15)); color: var(--accent2); }
+.feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.feature-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+.how-section { padding: 5rem 1.5rem; }
+.steps-row { display: flex; gap: 0; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.how-step { text-align: center; padding: 1.5rem 1rem; max-width: 160px; }
+.how-num { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent1), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; margin: 0 auto 1rem; }
+.how-step h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.3rem; }
+.how-step p { font-size: 0.75rem; color: var(--text-muted); }
+.how-arrow { color: var(--text-muted); font-size: 1.2rem; margin-top: 1.5rem; align-self: flex-start; padding-top: 1.5rem; }
+
+footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.82rem; border-top: 1px solid var(--glass-border); }
+</style>
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="/history">History</a>
+    <a href="/logout">Log out</a>
+    <a href="/select-role" class="btn btn-primary btn-sm">Start Interview</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="hero-badge"><i class="fas fa-star"></i> AI-Powered Interview Platform</div>
+    <h1>AI Mock<br><span>HR Interview</span></h1>
+    <p class="hero-sub">Practice smarter. Speak confidently. Get interview-ready.</p>
+    <p class="hero-desc">An AI-powered voice interview platform that creates personalized HR interviews using your selected job role, resume and interview responses.</p>
+    <div class="hero-btns">
+      <a href="/select-role" class="btn btn-primary btn-lg"><i class="fas fa-play"></i> Start Interview</a>
+      <a href="#how" class="btn btn-outline btn-lg"><i class="fas fa-info-circle"></i> How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">8+</div><div class="stat-label">Job Roles</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Interview Modes</div></div>
+      <div class="stat"><div class="stat-num">AI</div><div class="stat-label">Personalized</div></div>
+      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Voice-Based</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="section-heading">
+      <h2>Everything You Need to Ace Your Interview</h2>
+      <p>A complete AI-powered platform built for placement preparation</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+        <h3>Resume-Based Questions</h3>
+        <p>AI reads your resume and generates questions specific to your projects, skills, and experience.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-microphone"></i></div>
+        <h3>Voice-Based Interview</h3>
+        <p>Speak your answers naturally. The AI listens, transcribes, and evaluates your spoken responses.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-random"></i></div>
+        <h3>Dynamic Follow-up Questions</h3>
+        <p>Every answer shapes the next question. The AI adapts in real-time based on what you say.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-star"></i></div>
+        <h3>STAR Method Analysis</h3>
+        <p>Behavioral answers are evaluated using the Situation-Task-Action-Result framework.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>HR Readiness Score</h3>
+        <p>Get a comprehensive score across communication, clarity, structure, and HR suitability.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-lightbulb"></i></div>
+        <h3>Personalized Improvement Plan</h3>
+        <p>Receive actionable recommendations tailored to your specific weak areas and role.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-heading">
+      <h2>How It Works</h2>
+      <p>Five simple steps to your personalized AI interview</p>
+    </div>
+    <div class="steps-row">
+      <div class="how-step"><div class="how-num">1</div><h4>Select Role</h4><p>Choose the job role you're preparing for</p></div>
+      <div class="how-arrow"><i class="fas fa-chevron-right"></i></div>
+      <div class="how-step"><div class="how-num">2</div><h4>Upload Resume</h4><p>Upload your PDF or DOCX resume</p></div>
+      <div class="how-arrow"><i class="fas fa-chevron-right"></i></div>
+      <div class="how-step"><div class="how-num">3</div><h4>AI Analyzes</h4><p>AI creates your candidate profile</p></div>
+      <div class="how-arrow"><i class="fas fa-chevron-right"></i></div>
+      <div class="how-step"><div class="how-num">4</div><h4>Voice Interview</h4><p>Speak with the AI interviewer</p></div>
+      <div class="how-arrow"><i class="fas fa-chevron-right"></i></div>
+      <div class="how-step"><div class="how-num">5</div><h4>Get Report</h4><p>Receive your performance report</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>AI Mock HR Interview &mdash; Built for college placement preparation &mdash; <span id="demoTag"></span></p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+</body>
+</html>

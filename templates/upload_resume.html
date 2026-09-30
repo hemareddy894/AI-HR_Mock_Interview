@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Resume — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links"><a href="/select-role"><i class="fas fa-arrow-left"></i> Back</a></div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container-sm" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="progress-steps">
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> Select Role</div>
+      <div class="step-divider"></div>
+      <div class="step active"><div class="step-num">2</div> Upload Resume</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">3</div> AI Analysis</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">4</div> Interview</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">5</div> Report</div>
+    </div>
+
+    <div class="section-heading">
+      <h2>Upload Your Resume</h2>
+      <p>Selected Role: <strong style="color:var(--accent2)">{{ role_name }}</strong></p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="glass" style="padding:2rem;">
+      <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+        <h3>Drag &amp; Drop your resume here</h3>
+        <p>or click to browse files</p>
+        <p class="mt-2" style="font-size:0.78rem;color:var(--text-muted)">Supported: PDF, DOC, DOCX &bull; Max 5MB</p>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display:none" onchange="handleFile(this.files[0])">
+
+      <div id="fileInfo" class="hidden">
+        <div class="file-info">
+          <i class="fas fa-file-check"></i>
+          <div>
+            <span id="fileName"></span>
+            <div style="font-size:0.75rem;color:var(--text-muted)" id="fileSize"></div>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="clearFile()" style="margin-left:auto"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:1.5rem;">
+        <button class="btn btn-primary btn-lg" id="analyzeBtn" onclick="uploadResume()" disabled>
+          <i class="fas fa-brain"></i> Analyze Resume
+        </button>
+      </div>
+    </div>
+
+    <div class="glass mt-3" style="padding:1.25rem;">
+      <p style="font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:0.5rem;">
+        <i class="fas fa-shield-alt" style="color:var(--accent2)"></i>
+        Your resume is processed securely and used only for this interview session.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+let selectedFile = null;
+
+const uploadBox = document.getElementById('uploadBox');
+uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.classList.add('dragover'); });
+uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+uploadBox.addEventListener('drop', e => {
+  e.preventDefault(); uploadBox.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file) return;
+  const allowed = ['application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['pdf','doc','docx'].includes(ext)) {
+    showAlert('Only PDF, DOC, DOCX files are allowed.', 'error'); return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showAlert('File size must be under 5MB.', 'error'); return;
+  }
+  selectedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('fileInfo').classList.remove('hidden');
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfo').classList.add('hidden');
+  document.getElementById('analyzeBtn').disabled = true;
+}
+
+function uploadResume() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+  const fd = new FormData();
+  fd.append('resume', selectedFile);
+
+  fetch('/api/upload-resume', { method: 'POST', body: fd })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '/analyzing';
+    } else {
+      showAlert(data.error || 'Upload failed.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-brain"></i> Analyze Resume';
+    }
+  })
+  .catch(() => {
+    showAlert('Network error. Please try again.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-brain"></i> Analyze Resume';
+  });
+}
+
+function showAlert(msg, type) {
+  const box = document.getElementById('alertBox');
+  box.innerHTML = `<div class="alert alert-${type === 'error' ? 'error' : 'success'}"><i class="fas fa-exclamation-circle"></i> ${msg}</div>`;
+  setTimeout(() => box.innerHTML = '', 5000);
+}
+</script>
+</body>
+</html>

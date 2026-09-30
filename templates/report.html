@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Report — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.report-hero { text-align:center; padding:2.5rem 1.5rem 1.5rem; }
+.report-hero h1 { font-size:clamp(1.6rem,4vw,2.4rem); font-weight:900; margin-bottom:0.5rem; }
+.meta-row { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin-top:1rem; }
+.meta-chip { padding:0.35rem 0.9rem; border-radius:20px; font-size:0.78rem; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-secondary); }
+.section-title { font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+.list-item { display:flex; align-items:flex-start; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.88rem; }
+.list-item:last-child { border-bottom:none; }
+.list-item i { margin-top:2px; flex-shrink:0; }
+.radar-wrap { max-width:320px; margin:0 auto; }
+@media print {
+  .navbar, .btn, script { display:none!important; }
+  body { background:#fff!important; color:#000!important; }
+  .glass { background:#f9f9f9!important; border:1px solid #ddd!important; box-shadow:none!important; backdrop-filter:none!important; }
+  .bg-animated, .bg-orb { display:none!important; }
+  .page-wrapper { padding-top:0!important; }
+  .text-gradient { -webkit-text-fill-color:#333!important; }
+  .score-val, .score-num { color:#333!important; }
+  .section-title { color:#555!important; }
+  .meta-chip { color:#333!important; background:#eee!important; }
+}
+</style>
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links">
+    <a href="/history">History</a>
+    <a href="/select-role" class="btn btn-primary btn-sm">New Interview</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container" style="padding-top:1.5rem;padding-bottom:4rem;">
+
+    <div class="report-hero">
+      <h1 class="text-gradient">Your HR Interview Report</h1>
+      <p style="color:var(--text-muted)">Here's a detailed breakdown of your performance</p>
+      <div class="meta-row">
+        <span class="meta-chip"><i class="fas fa-user"></i> {{ profile.name or 'Candidate' }}</span>
+        <span class="meta-chip"><i class="fas fa-briefcase"></i> {{ role_name }}</span>
+        <span class="meta-chip"><i class="fas fa-layer-group"></i> {{ interview.mode }}</span>
+        <span class="meta-chip"><i class="fas fa-signal"></i> {{ interview.difficulty }}</span>
+        <span class="meta-chip"><i class="fas fa-calendar"></i> {{ interview.completed_at.strftime('%d %b %Y') if interview.completed_at else 'Today' }}</span>
+      </div>
+    </div>
+
+    <!-- Overall Score + Radar -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;" class="top-grid">
+      <div class="glass" style="padding:2rem;text-align:center;">
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+              <circle cx="70" cy="70" r="58" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
+                stroke-dasharray="{{ (report.hr_readiness_score or 70) / 100 * 364.4 }} 364.4"
+                stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#6c63ff"/>
+                  <stop offset="100%" stop-color="#38bdf8"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-ring-text">
+              <span class="score-num" data-count="{{ report.hr_readiness_score|int }}" data-suffix="%">{{ report.hr_readiness_score|int }}%</span>
+              <span class="score-label">HR Readiness</span>
+            </div>
+          </div>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem;">{{ report_data.get('summary','') }}</p>
+      </div>
+
+      <div class="glass" style="padding:2rem;">
+        <div class="radar-wrap">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Breakdown -->
+    <div class="glass" style="padding:2rem;margin-bottom:1.5rem;">
+      <div class="section-title"><i class="fas fa-chart-bar"></i> Score Breakdown</div>
+      <div class="scores-grid">
+        {% set score_items = [
+          ('Communication', report.communication_score, 'fas fa-comments'),
+          ('Answer Quality', report.answer_quality_score, 'fas fa-star'),
+          ('Relevance', report.relevance_score, 'fas fa-bullseye'),
+          ('Clarity', report.clarity_score, 'fas fa-eye'),
+          ('Structure', report.structure_score, 'fas fa-sitemap'),
+          ('STAR Method', report.star_score, 'fas fa-layer-group'),
+        ] %}
+        {% for label, score, icon in score_items %}
+        {% set s = (score or 0)|int %}
+        <div class="score-item">
+          <label><i class="{{ icon }}"></i> {{ label }}</label>
+          <div class="score-val" data-count="{{ s }}" data-suffix="%"
+            style="color:{% if s >= 75 %}var(--success){% elif s >= 50 %}var(--warning){% else %}var(--danger){% endif %}">{{ s }}%</div>
+          <div class="bar"><div class="bar-fill" style="width:{{ s }}%"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Strengths & Improvements -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;" class="si-grid">
+      <div class="glass" style="padding:2rem;">
+        <div class="section-title"><i class="fas fa-check-circle" style="color:var(--success)"></i> Strengths</div>
+        {% for s in strengths %}
+        <div class="list-item"><i class="fas fa-check" style="color:var(--success)"></i> {{ s }}</div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:0.85rem;">No strengths recorded.</p>
+        {% endfor %}
+      </div>
+      <div class="glass" style="padding:2rem;">
+        <div class="section-title"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i> Areas to Improve</div>
+        {% for i in improvements %}
+        <div class="list-item"><i class="fas fa-arrow-up" style="color:var(--warning)"></i> {{ i }}</div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:0.85rem;">No improvements recorded.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Improvement Plan -->
+    <div class="glass" style="padding:2rem;margin-bottom:1.5rem;">
+      <div class="section-title"><i class="fas fa-road" style="color:var(--accent3)"></i> Personalized Improvement Plan</div>
+      {% for step in improvement_plan %}
+      <div class="list-item">
+        <i class="fas fa-chevron-right" style="color:var(--accent2)"></i>
+        {{ step }}
+      </div>
+      {% else %}
+      <p style="color:var(--text-muted);font-size:0.85rem;">No improvement plan generated.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Speaking Signals -->
+    {% set all_fillers = {} %}
+    {% set total_duration = 0 %}
+    {% for item in qa_feedback %}
+      {% if item.eval and item.eval.get('filler_words') %}
+        {# filler_words is stored on the answer, passed via eval #}
+      {% endif %}
+    {% endfor %}
+    {% set filler_data = [] %}
+    {% for item in qa_feedback %}
+      {% if item.get('filler_words') %}
+        {% set filler_data = filler_data + [item.filler_words] %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="glass" style="padding:2rem;margin-bottom:1.5rem;">
+      <div class="section-title"><i class="fas fa-wave-square" style="color:var(--accent3)"></i> Communication / Speaking Signals</div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1.25rem;">
+        These signals are based on your transcribed answers. They indicate communication patterns — not personality or honesty.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;">
+        <div class="score-item">
+          <label><i class="fas fa-clock"></i> Total Duration</label>
+          <div class="score-val" style="color:var(--accent2);font-size:1.2rem;">{{ interview_duration }} min</div>
+        </div>
+        <div class="score-item">
+          <label><i class="fas fa-question-circle"></i> Questions Answered</label>
+          <div class="score-val" style="color:var(--accent2);font-size:1.2rem;">{{ qa_feedback | selectattr('answer') | list | length }} / {{ qa_feedback | length }}</div>
+        </div>
+        <div class="score-item">
+          <label><i class="fas fa-microphone"></i> Avg Answer Length</label>
+          <div class="score-val" style="color:var(--accent2);font-size:1.2rem;">~{{ avg_words }} words</div>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem;">
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem;">Common filler words detected across all answers:</p>
+        <div id="fillerDisplay" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <span style="font-size:0.82rem;color:var(--text-muted);">Analysed from transcribed speech.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question-wise Feedback -->
+    <div style="margin-bottom:1.5rem;">
+      <div class="section-title" style="margin-bottom:1rem;"><i class="fas fa-list-alt"></i> Question-wise Feedback</div>
+      {% for item in qa_feedback %}
+      {% set sc = (item.score or 0)|int %}
+      <div class="glass qa-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+          <div class="q-text">Q{{ loop.index }}. {{ item.question }}</div>
+          <span class="qa-score {% if sc >= 7 %}high{% elif sc >= 5 %}mid{% else %}low{% endif %}">
+            <i class="fas fa-star"></i> {{ sc }}/10
+          </span>
+        </div>
+        {% if item.answer %}
+        <div class="a-text">{{ item.answer }}</div>
+        {% else %}
+        <div class="a-text" style="color:var(--text-muted);font-style:italic;">No answer recorded</div>
+        {% endif %}
+        {% if item.eval %}
+        <div class="feedback-row">
+          <div class="feedback-item good">
+            <strong>✓ What You Did Well</strong>
+            {{ item.eval.get('what_was_good', item.eval.get('strengths', '—')) }}
+          </div>
+          <div class="feedback-item bad">
+            <strong>⚠ What Was Missing</strong>
+            {{ item.eval.get('what_was_missing', item.eval.get('improvements', '—')) }}
+          </div>
+          <div class="feedback-item tip">
+            <strong>💡 How to Improve</strong>
+            {{ item.eval.get('how_to_improve', '—') }}
+          </div>
+        </div>
+        {% if item.eval.get('star_situation') and item.eval.get('star_situation') != 'N/A' %}
+        <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+          {% for label, val in [('S',item.eval.star_situation),('T',item.eval.star_task),('A',item.eval.star_action),('R',item.eval.star_result)] %}
+          <span style="padding:0.2rem 0.6rem;border-radius:6px;font-size:0.72rem;font-weight:700;
+            background:{% if val=='Good' %}rgba(52,211,153,0.15){% elif val=='Partial' %}rgba(251,191,36,0.15){% else %}rgba(248,113,113,0.15){% endif %};
+            color:{% if val=='Good' %}var(--success){% elif val=='Partial' %}var(--warning){% else %}var(--danger){% endif %}">
+            {{ label }}: {{ val }}
+          </span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+        {% if item.reason %}
+        <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted);">
+          <i class="fas fa-info-circle"></i> {{ item.reason }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2rem;">
+      <a href="/practice-weak-areas/{{ interview.id }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-dumbbell"></i> Practice My Weak Areas
+      </a>
+      <a href="/history" class="btn btn-outline btn-lg">
+        <i class="fas fa-history"></i> Interview History
+      </a>
+      <button onclick="window.print()" class="btn btn-outline btn-lg">
+        <i class="fas fa-print"></i> Print Report
+      </button>
+      <a href="/select-role" class="btn btn-outline btn-lg">
+        <i class="fas fa-redo"></i> New Interview
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+// Aggregate filler words from all answers
+const qaData = {{ qa_feedback | tojson }};
+const fillerTotals = {};
+qaData.forEach(item => {
+  if (item.filler_words) {
+    Object.entries(item.filler_words).forEach(([word, count]) => {
+      fillerTotals[word] = (fillerTotals[word] || 0) + count;
+    });
+  }
+});
+const fillerDisplay = document.getElementById('fillerDisplay');
+const fillerEntries = Object.entries(fillerTotals).sort((a,b) => b[1]-a[1]);
+if (fillerEntries.length > 0) {
+  fillerDisplay.innerHTML = fillerEntries.map(([word, count]) => {
+    const color = count >= 5 ? 'var(--danger)' : count >= 3 ? 'var(--warning)' : 'var(--accent2)';
+    return `<span style="padding:0.25rem 0.75rem;border-radius:20px;font-size:0.78rem;font-weight:600;
+      background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);color:${color}">
+      "${word}" &times;${count}</span>`;
+  }).join('');
+} else {
+  fillerDisplay.innerHTML = '<span style="font-size:0.82rem;color:var(--success);"><i class="fas fa-check-circle"></i> No significant filler words detected.</span>';
+}
+
+// Aggregate filler words from all answers
+const qaData = {{ qa_feedback | tojson }};
+const fillerTotals = {};
+qaData.forEach(item => {
+  if (item.filler_words) {
+    Object.entries(item.filler_words).forEach(([word, count]) => {
+      fillerTotals[word] = (fillerTotals[word] || 0) + count;
+    });
+  }
+});
+const fillerDisplay = document.getElementById('fillerDisplay');
+const fillerEntries = Object.entries(fillerTotals).sort((a,b) => b[1]-a[1]);
+if (fillerEntries.length > 0) {
+  fillerDisplay.innerHTML = fillerEntries.map(([word, count]) => {
+    const color = count >= 5 ? 'var(--danger)' : count >= 3 ? 'var(--warning)' : 'var(--accent2)';
+    return `<span style="padding:0.25rem 0.75rem;border-radius:20px;font-size:0.78rem;font-weight:600;
+      background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);color:${color}">
+      "${word}" &times;${count}</span>`;
+  }).join('');
+} else {
+  fillerDisplay.innerHTML = '<span style="font-size:0.82rem;color:var(--success);"><i class=\'fas fa-check-circle\'></i> No significant filler words detected.</span>';
+}
+
+// Radar Chart
+const ctx = document.getElementById('radarChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: ['Communication','Answer Quality','Relevance','Clarity','Structure','STAR'],
+    datasets: [{
+      label: 'Your Score',
+      data: [
+        {{ report.communication_score or 0 }},
+        {{ report.answer_quality_score or 0 }},
+        {{ report.relevance_score or 0 }},
+        {{ report.clarity_score or 0 }},
+        {{ report.structure_score or 0 }},
+        {{ report.star_score or 0 }}
+      ],
+      backgroundColor: 'rgba(108,99,255,0.15)',
+      borderColor: '#6c63ff',
+      pointBackgroundColor: '#a78bfa',
+      pointBorderColor: '#fff',
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { color: 'rgba(240,240,255,0.4)', stepSize: 25, backdropColor: 'transparent' },
+        grid: { color: 'rgba(255,255,255,0.08)' },
+        pointLabels: { color: 'rgba(240,240,255,0.7)', font: { size: 11 } }
+      }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// Responsive grid fix
+function fixGrids() {
+  const w = window.innerWidth;
+  document.querySelectorAll('.top-grid,.si-grid').forEach(g => {
+    g.style.gridTemplateColumns = w < 640 ? '1fr' : '1fr 1fr';
+  });
+}
+fixGrids();
+window.addEventListener('resize', fixGrids);
+</script>
+</body>
+</html>

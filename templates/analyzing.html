@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyzing Resume — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+</nav>
+
+<div class="page-wrapper" style="justify-content:center;">
+  <div class="container-sm" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="progress-steps">
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> Select Role</div>
+      <div class="step-divider"></div>
+      <div class="step done"><div class="step-num"><i class="fas fa-check"></i></div> Upload Resume</div>
+      <div class="step-divider"></div>
+      <div class="step active"><div class="step-num">3</div> AI Analysis</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">4</div> Interview</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">5</div> Report</div>
+    </div>
+
+    <div class="glass" style="padding:3rem 2rem;text-align:center;" id="loadingCard">
+      <div class="analyze-spinner"></div>
+      <h2 style="font-size:1.5rem;margin-bottom:0.5rem;">Analyzing Your Resume</h2>
+      <p style="color:var(--text-muted);margin-bottom:2rem;">Our AI is creating your personalized candidate profile...</p>
+
+      <div class="analyze-steps">
+        <div class="analyze-step" id="step1">
+          <i class="fas fa-file-search"></i>
+          <span>Extracting resume content</span>
+        </div>
+        <div class="analyze-step pending" id="step2">
+          <i class="fas fa-brain"></i>
+          <span>Identifying skills &amp; experience</span>
+        </div>
+        <div class="analyze-step pending" id="step3">
+          <i class="fas fa-user-tie"></i>
+          <span>Building candidate profile</span>
+        </div>
+        <div class="analyze-step pending" id="step4">
+          <i class="fas fa-magic"></i>
+          <span>Preparing personalized interview</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass hidden" id="profileCard" style="padding:2rem;margin-top:1.5rem;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">🎉</div>
+        <h2 style="font-size:1.4rem;margin-bottom:0.4rem;">Your personalized interview is ready!</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;">Here's what we found in your resume:</p>
+      </div>
+
+      <div class="profile-grid" id="profileGrid"></div>
+
+      <div style="text-align:center;margin-top:2rem;">
+        <a href="/interview-setup" class="btn btn-primary btn-lg">
+          <i class="fas fa-arrow-right"></i> Set Up Interview
+        </a>
+      </div>
+    </div>
+
+    <div id="errorCard" class="hidden" style="margin-top:1rem;">
+      <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <span id="errorMsg"></span></div>
+      <div style="text-align:center;margin-top:1rem;">
+        <a href="/upload-resume" class="btn btn-outline">Try Again</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+const steps = [
+  {el: document.getElementById('step1'), delay: 400},
+  {el: document.getElementById('step2'), delay: 1200},
+  {el: document.getElementById('step3'), delay: 2200},
+  {el: document.getElementById('step4'), delay: 3000},
+];
+
+function animateSteps(cb) {
+  steps.forEach((s, i) => {
+    setTimeout(() => {
+      steps.slice(0, i).forEach(prev => {
+        prev.el.classList.remove('active');
+        prev.el.classList.add('done');
+        prev.el.querySelector('i').className = 'fas fa-check-circle';
+      });
+      s.el.classList.remove('pending');
+      s.el.classList.add('active');
+      if (i === steps.length - 1) setTimeout(cb, 800);
+    }, s.delay);
+  });
+}
+
+animateSteps(() => {
+  fetch('/api/analyze-resume', { method: 'POST', headers: {'Content-Type': 'application/json'} })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      steps.forEach(s => {
+        s.el.classList.remove('active');
+        s.el.classList.add('done');
+        s.el.querySelector('i').className = 'fas fa-check-circle';
+      });
+      showProfile(data.profile);
+    } else {
+      showError(data.error || 'Analysis failed.');
+    }
+  })
+  .catch(() => showError('Network error. Please try again.'));
+});
+
+function showProfile(p) {
+  document.getElementById('loadingCard').classList.add('hidden');
+  const grid = document.getElementById('profileGrid');
+  const items = [
+    {label: 'Name', val: p.name || 'Not found'},
+    {label: 'Education', val: p.education || 'Not found'},
+    {label: 'Technical Skills', val: Array.isArray(p.technical_skills) ? p.technical_skills.join(', ') : (p.technical_skills || 'Not found')},
+    {label: 'Soft Skills', val: Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || 'Not found')},
+    {label: 'Projects', val: Array.isArray(p.projects) ? p.projects.join('; ') : (p.projects || 'Not found')},
+    {label: 'Internships', val: Array.isArray(p.internships) ? p.internships.join('; ') : (p.internships || 'None listed')},
+    {label: 'Certifications', val: Array.isArray(p.certifications) ? p.certifications.join(', ') : (p.certifications || 'None listed')},
+    {label: 'Achievements', val: Array.isArray(p.achievements) ? p.achievements.join('; ') : (p.achievements || 'None listed')},
+  ];
+  grid.innerHTML = items.map(i => `
+    <div class="profile-item">
+      <label>${i.label}</label>
+      <p>${i.val}</p>
+    </div>`).join('');
+  document.getElementById('profileCard').classList.remove('hidden');
+}
+
+function showError(msg) {
+  document.getElementById('loadingCard').classList.add('hidden');
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorCard').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

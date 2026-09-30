@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview History — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/select-role" class="btn btn-primary btn-sm">New Interview</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="section-heading">
+      <h2>Interview History</h2>
+      <p>Track your progress over time</p>
+    </div>
+
+    {% if interviews %}
+    <div class="glass" style="padding:2rem;margin-bottom:2rem;">
+      <canvas id="progressChart" height="80"></canvas>
+    </div>
+
+    {% for iv in interviews %}
+    {% set score = (iv.overall_score or 0)|int %}
+    <div class="glass history-card glass-hover">
+      <div class="history-score" style="color:{% if score >= 75 %}var(--success){% elif score >= 50 %}var(--warning){% else %}var(--danger){% endif %}">
+        {{ score }}%
+      </div>
+      <div class="history-info">
+        <h4>{{ iv.role.name if iv.role else 'Interview' }} — {{ iv.mode }}</h4>
+        <p>{{ iv.difficulty }} &bull; {{ iv.total_questions }} questions &bull;
+          {{ iv.completed_at.strftime('%d %b %Y, %I:%M %p') if iv.completed_at else 'In progress' }}
+        </p>
+      </div>
+      <div class="history-bar">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:{{ score }}%"></div>
+        </div>
+      </div>
+      <a href="/report/{{ iv.id }}" class="btn btn-outline btn-sm">View Report</a>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="glass" style="padding:4rem;text-align:center;">
+      <div style="font-size:3rem;margin-bottom:1rem;">📋</div>
+      <h3 style="margin-bottom:0.5rem;">No interviews yet</h3>
+      <p style="color:var(--text-muted);margin-bottom:2rem;">Complete your first interview to see your history here.</p>
+      <a href="/select-role" class="btn btn-primary">Start Your First Interview</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+{% if interviews %}
+<script>
+const labels = [{% for iv in interviews|reverse %}'Interview {{ loop.index }}'{% if not loop.last %},{% endif %}{% endfor %}];
+const scores = [{% for iv in interviews|reverse %}{{ (iv.overall_score or 0)|int }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+new Chart(document.getElementById('progressChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Overall Score (%)',
+      data: scores,
+      borderColor: '#6c63ff',
+      backgroundColor: 'rgba(108,99,255,0.1)',
+      pointBackgroundColor: '#a78bfa',
+      pointRadius: 5,
+      tension: 0.4,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { min:0, max:100, ticks:{color:'rgba(240,240,255,0.5)'}, grid:{color:'rgba(255,255,255,0.06)'} },
+      x: { ticks:{color:'rgba(240,240,255,0.5)'}, grid:{color:'rgba(255,255,255,0.06)'} }
+    },
+    plugins: { legend:{ labels:{color:'rgba(240,240,255,0.7)'} } }
+  }
+});
+</script>
+{% endif %}
+</body>
+</html>

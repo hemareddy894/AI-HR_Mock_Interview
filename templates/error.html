@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ code }} — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+</nav>
+
+<div class="page-wrapper" style="justify-content:center;align-items:center;">
+  <div class="glass" style="padding:3rem 2.5rem;text-align:center;max-width:480px;width:90%;margin:2rem auto;">
+    <div style="font-size:4rem;font-weight:900;background:linear-gradient(135deg,var(--accent1),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;">
+      {{ code }}
+    </div>
+    <h2 style="font-size:1.3rem;margin-bottom:0.75rem;">{{ message }}</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:2rem;">{{ detail }}</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="/" class="btn btn-primary"><i class="fas fa-home"></i> Go Home</a>
+      <a href="javascript:history.back()" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Go Back</a>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+</body>
+</html>

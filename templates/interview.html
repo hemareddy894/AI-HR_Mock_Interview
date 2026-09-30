@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview — AI Mock HR Interview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+.interview-page { padding: 1rem 1rem 3rem; }
+.interview-header { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.5rem; margin-bottom:1rem; }
+.interview-header h2 { font-size:1rem; font-weight:700; }
+.timer { font-size:0.9rem; color:var(--text-muted); display:flex; align-items:center; gap:0.4rem; }
+.status-bar { display:flex; align-items:center; gap:1rem; padding:0.75rem 1.5rem; margin-bottom:1rem; }
+.status-indicator { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; }
+.dot { width:8px; height:8px; border-radius:50%; }
+.dot-green { background:var(--success); animation:blink 1.5s ease-in-out infinite; }
+.dot-yellow { background:var(--warning); animation:blink 1.5s ease-in-out infinite; }
+.dot-gray { background:var(--text-muted); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.ai-name { font-size:0.85rem; font-weight:700; color:var(--accent2); margin-bottom:0.25rem; }
+.speaking-waves { display:flex; align-items:center; gap:3px; height:20px; }
+.wave { width:3px; border-radius:3px; background:var(--accent2); animation:wave 0.8s ease-in-out infinite; }
+.wave:nth-child(2){animation-delay:0.1s} .wave:nth-child(3){animation-delay:0.2s}
+.wave:nth-child(4){animation-delay:0.3s} .wave:nth-child(5){animation-delay:0.4s}
+@keyframes wave { 0%,100%{height:4px} 50%{height:16px} }
+.speaking-waves.hidden-waves .wave { height:4px; animation:none; }
+
+.mic-status { font-size:0.85rem; color:var(--text-muted); margin-top:0.75rem; min-height:1.2em; }
+.why-btn { font-size:0.75rem; color:var(--text-muted); background:none; border:1px solid var(--glass-border); border-radius:20px; padding:0.25rem 0.75rem; cursor:pointer; transition:var(--transition); }
+.why-btn:hover { color:var(--accent2); border-color:var(--accent2); }
+
+.end-btn { background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.3); color:#fca5a5; padding:0.5rem 1.25rem; border-radius:50px; font-size:0.82rem; cursor:pointer; transition:var(--transition); }
+.end-btn:hover { background:rgba(248,113,113,0.25); }
+</style>
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span id="demoTag"></span>
+    <button class="end-btn" onclick="confirmEnd()"><i class="fas fa-stop"></i> End Interview</button>
+  </div>
+</nav>
+
+<div class="page-wrapper interview-page">
+  <div class="interview-layout">
+
+    <!-- Main Interview Panel -->
+    <div>
+      <div class="glass interview-header">
+        <div>
+          <h2>AI HR Interviewer</h2>
+          <p style="font-size:0.78rem;color:var(--text-muted)">Role: {{ role_name }}</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:1.5rem;">
+          <div class="timer"><i class="fas fa-clock"></i> <span id="timerDisplay">00:00</span></div>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem;color:var(--text-muted)">Question</div>
+            <div style="font-weight:700;" id="qProgress">0 / 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass" style="padding:0.75rem 1.5rem;margin-bottom:1rem;">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- AI Avatar -->
+      <div class="glass" style="padding:2rem;text-align:center;margin-bottom:1rem;">
+        <div class="ai-avatar" id="aiAvatar">🤖</div>
+        <div class="ai-name">AI HR Interviewer</div>
+        <div class="speaking-waves hidden-waves" id="speakingWaves">
+          <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+          <div class="wave"></div><div class="wave"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="glass question-card" id="questionCard" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+          <div class="question-label" id="questionLabel">Question 1</div>
+          <button class="why-btn" id="whyBtn" onclick="showWhy()" style="display:none;">
+            <i class="fas fa-question-circle"></i> Why was I asked this?
+          </button>
+        </div>
+        <div class="question-text" id="questionText">Loading question...</div>
+      </div>
+
+      <!-- Loading Question -->
+      <div class="glass question-card" id="loadingCard" style="text-align:center;">
+        <div class="analyze-spinner" style="width:50px;height:50px;margin:0 auto 1rem;"></div>
+        <p style="color:var(--text-muted)">Preparing your first question...</p>
+      </div>
+
+      <!-- Mic Section -->
+      <div class="glass" style="padding:1.5rem;text-align:center;margin-top:1rem;" id="micSection" style="display:none;">
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;" id="micPrompt">AI is speaking...</p>
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()" disabled>
+          <i class="fas fa-microphone" id="micIcon"></i>
+        </button>
+        <div class="mic-status" id="micStatus"></div>
+        <div class="transcript-box" id="transcriptBox" style="display:none;text-align:left;"></div>
+        <div style="margin-top:1rem;display:none;" id="submitRow">
+          <button class="btn btn-success" onclick="submitAnswer()">
+            <i class="fas fa-paper-plane"></i> Submit Answer
+          </button>
+          <button class="btn btn-outline" style="margin-left:0.75rem;" onclick="retryAnswer()">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </div>
+        <div style="margin-top:0.75rem;">
+          <button class="why-btn" onclick="skipQuestion()" id="skipBtn" style="display:none;">
+            <i class="fas fa-forward"></i> Skip Question
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversation Panel -->
+    <div>
+      <div class="glass conversation-panel" style="position:sticky;top:90px;">
+        <h3><i class="fas fa-history"></i> Conversation</h3>
+        <div class="conv-list" id="convList">
+          <p style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:1rem;">
+            Your conversation will appear here
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Why Modal -->
+<div class="modal-overlay" id="whyModal">
+  <div class="glass modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h3><i class="fas fa-lightbulb" style="color:var(--accent2)"></i> Why was I asked this?</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;"><i class="fas fa-times"></i></button>
+    </div>
+    <p id="whyText"></p>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+const INTERVIEW_ID = {{ interview_id }};
+let currentQuestionId = null;
+let currentQuestionReason = '';
+let currentQuestionNum = 0;
+let totalQuestions = 0;
+let isListening = false;
+let recognition = null;
+let transcript = '';
+let answerStartTime = null;
+let timerInterval = null;
+let elapsedSeconds = 0;
+let speechSynth = window.speechSynthesis;
+let isSpeaking = false;
+
+// ── Timer ──
+function startTimer() {
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    const m = String(Math.floor(elapsedSeconds/60)).padStart(2,'0');
+    const s = String(elapsedSeconds%60).padStart(2,'0');
+    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+// ── Demo check (handled by shared.js) ──
+// Remove duplicate fetch — shared.js injects the badge automatically
+
+// ── Speech Recognition Setup ──
+function setupRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.continuous = true;
+  r.interimResults = true;
+  r.lang = 'en-US';
+  r.onresult = e => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    transcript += final;
+    const box = document.getElementById('transcriptBox');
+    box.textContent = transcript + (interim ? ' ' + interim : '');
+    box.style.display = 'block';
+    if (transcript.trim()) {
+      document.getElementById('submitRow').style.display = 'block';
+    }
+  };
+  r.onerror = e => {
+    if (e.error === 'not-allowed') {
+      setMicStatus('Microphone permission denied. Please allow microphone access.', 'error');
+    } else if (e.error === 'no-speech') {
+      setMicStatus('No speech detected. Try again.', 'warn');
+    } else {
+      setMicStatus('Speech recognition error: ' + e.error, 'error');
+    }
+    stopListening();
+  };
+  r.onend = () => { if (isListening) r.start(); };
+  return r;
+}
+
+// ── TTS ──
+let ttsVoices = [];
+function loadVoices() {
+  ttsVoices = speechSynth.getVoices();
+}
+if (speechSynth.onvoiceschanged !== undefined) {
+  speechSynth.onvoiceschanged = loadVoices;
+}
+loadVoices();
+
+function speakText(text, onDone) {
+  if (!speechSynth) { if(onDone) onDone(); return; }
+  speechSynth.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 0.92; utt.pitch = 1; utt.volume = 1;
+  const preferred = ttsVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+                 || ttsVoices.find(v => v.lang.startsWith('en'));
+  if (preferred) utt.voice = preferred;
+  utt.onstart = () => {
+    isSpeaking = true;
+    document.getElementById('aiAvatar').classList.add('speaking');
+    document.getElementById('speakingWaves').classList.remove('hidden-waves');
+    setMicStatus('AI is speaking...', 'info');
+    document.getElementById('micBtn').disabled = true;
+    document.getElementById('micPrompt').textContent = 'AI is speaking...';
+  };
+  utt.onend = () => {
+    isSpeaking = false;
+    document.getElementById('aiAvatar').classList.remove('speaking');
+    document.getElementById('speakingWaves').classList.add('hidden-waves');
+    if (onDone) onDone();
+  };
+  utt.onerror = () => { isSpeaking = false; if (onDone) onDone(); };
+  speechSynth.speak(utt);
+}
+
+function enableMic() {
+  document.getElementById('micBtn').disabled = false;
+  document.getElementById('micPrompt').textContent = 'Your Turn 🎤 — Press the microphone to answer';
+  setMicStatus('Ready to listen. Press the mic button to start.', 'ready');
+  document.getElementById('skipBtn').style.display = 'inline-flex';
+}
+
+// ── Mic Toggle ──
+function toggleMic() {
+  if (isListening) stopListening();
+  else startListening();
+}
+
+function startListening() {
+  if (!recognition) recognition = setupRecognition();
+  if (!recognition) {
+    setMicStatus('Speech recognition not supported in this browser. Please type your answer below.', 'error');
+    showTextFallback();
+    return;
+  }
+  transcript = '';
+  document.getElementById('transcriptBox').textContent = '';
+  document.getElementById('transcriptBox').style.display = 'block';
+  document.getElementById('submitRow').style.display = 'none';
+  try {
+    recognition.start();
+    isListening = true;
+    answerStartTime = Date.now();
+    document.getElementById('micBtn').classList.add('listening');
+    document.getElementById('micIcon').className = 'fas fa-stop';
+    document.getElementById('micPrompt').textContent = 'Listening... Speak your answer';
+    setMicStatus('🔴 Recording — speak clearly', 'listening');
+  } catch(e) {
+    setMicStatus('Could not start microphone: ' + e.message, 'error');
+  }
+}
+
+function stopListening() {
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+  isListening = false;
+  document.getElementById('micBtn').classList.remove('listening');
+  document.getElementById('micIcon').className = 'fas fa-microphone';
+  document.getElementById('micPrompt').textContent = 'Recording stopped';
+  setMicStatus('Recording stopped. Review your answer and submit.', 'ready');
+  if (transcript.trim()) document.getElementById('submitRow').style.display = 'block';
+}
+
+function retryAnswer() {
+  transcript = '';
+  document.getElementById('transcriptBox').textContent = '';
+  document.getElementById('transcriptBox').style.display = 'none';
+  document.getElementById('submitRow').style.display = 'none';
+  setMicStatus('Ready. Press mic to try again.', 'ready');
+}
+
+function skipQuestion() {
+  if (!confirm('Skip this question? It will be recorded as unanswered.')) return;
+  stopListening();
+  transcript = '[Skipped]';
+  document.getElementById('skipBtn').style.display = 'none';
+  addToConversation('user', '(Question skipped)');
+  fetch('/api/submit-answer', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ question_id: currentQuestionId, answer_text: '', duration_seconds: 0 })
+  }).finally(() => setTimeout(loadNextQuestion, 800));
+}
+
+function setMicStatus(msg, type) {
+  const el = document.getElementById('micStatus');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? 'var(--danger)' : type === 'listening' ? 'var(--danger)' : type === 'info' ? 'var(--accent2)' : 'var(--text-muted)';
+}
+
+function showTextFallback() {
+  const box = document.getElementById('transcriptBox');
+  box.contentEditable = 'true';
+  box.style.display = 'block';
+  box.textContent = '';
+  box.placeholder = 'Type your answer here...';
+  box.oninput = () => {
+    transcript = box.textContent;
+    document.getElementById('submitRow').style.display = transcript.trim() ? 'block' : 'none';
+  };
+}
+
+// ── Load Next Question ──
+function loadNextQuestion() {
+  document.getElementById('questionCard').style.display = 'none';
+  document.getElementById('loadingCard').style.display = 'block';
+  document.getElementById('micSection').style.display = 'none';
+
+  fetch('/api/next-question', { method: 'POST', headers: {'Content-Type':'application/json'} })
+  .then(r => r.json())
+  .then(data => {
+    if (data.done) { finishInterview(); return; }
+    currentQuestionId = data.question_id;
+    currentQuestionReason = data.question_reason || '';
+    currentQuestionNum = data.question_number;
+    totalQuestions = data.total_questions;
+
+    document.getElementById('questionLabel').textContent = `Question ${data.question_number} of ${data.total_questions}`;
+    document.getElementById('questionText').textContent = data.question_text;
+    document.getElementById('qProgress').textContent = `${data.question_number} / ${data.total_questions}`;
+    document.getElementById('progressBar').style.width = `${(data.question_number / data.total_questions) * 100}%`;
+    document.getElementById('whyBtn').style.display = 'inline-flex';
+    currentQuestionReason = data.question_reason || 'This question was selected based on your resume and interview context.';
+
+    document.getElementById('loadingCard').style.display = 'none';
+    document.getElementById('questionCard').style.display = 'block';
+    document.getElementById('micSection').style.display = 'block';
+
+    // Reset mic state
+    transcript = '';
+    document.getElementById('transcriptBox').style.display = 'none';
+    document.getElementById('submitRow').style.display = 'none';
+    document.getElementById('skipBtn').style.display = 'none';
+    document.getElementById('micBtn').disabled = true;
+
+    // Add to conversation
+    addToConversation('ai', data.question_text);
+
+    // Speak the question
+    speakText(data.question_text, enableMic);
+  })
+  .catch(() => {
+    document.getElementById('loadingCard').style.display = 'none';
+    document.getElementById('questionCard').style.display = 'block';
+    document.getElementById('questionText').textContent = 'Error loading question. Please refresh.';
+  });
+}
+
+// ── Submit Answer ──
+function submitAnswer() {
+  const answerText = transcript.trim();
+  const duration = answerStartTime ? (Date.now() - answerStartTime) / 1000 : 0;
+
+  if (!answerText) {
+    setMicStatus('Please provide an answer before submitting.', 'error');
+    return;
+  }
+
+  stopListening();
+  document.getElementById('micBtn').disabled = true;
+  document.getElementById('submitRow').style.display = 'none';
+  setMicStatus('Evaluating your answer...', 'info');
+
+  addToConversation('user', answerText);
+
+  fetch('/api/submit-answer', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ question_id: currentQuestionId, answer_text: answerText, duration_seconds: duration })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      setMicStatus('Answer saved. Loading next question...', 'info');
+      setTimeout(loadNextQuestion, 1200);
+    } else {
+      setMicStatus('Error saving answer. Continuing...', 'error');
+      setTimeout(loadNextQuestion, 2000);
+    }
+  })
+  .catch(() => {
+    setMicStatus('Network error. Continuing...', 'error');
+    setTimeout(loadNextQuestion, 2000);
+  });
+}
+
+// ── Conversation History ──
+function addToConversation(role, text) {
+  const list = document.getElementById('convList');
+  const placeholder = list.querySelector('p');
+  if (placeholder) placeholder.remove();
+  const item = document.createElement('div');
+  item.className = `conv-item ${role}`;
+  item.innerHTML = `<strong>${role === 'ai' ? '🤖 AI Interviewer' : '🎤 You'}</strong>${text}`;
+  list.appendChild(item);
+  list.scrollTop = list.scrollHeight;
+}
+
+// ── Why Modal ──
+function showWhy() {
+  document.getElementById('whyText').textContent = currentQuestionReason || 'This question was selected based on your resume and interview context.';
+  document.getElementById('whyModal').classList.add('open');
+}
+function closeModal() { document.getElementById('whyModal').classList.remove('open'); }
+document.getElementById('whyModal').addEventListener('click', e => { if(e.target === e.currentTarget) closeModal(); });
+
+// ── Finish ──
+function finishInterview() {
+  if (timerInterval) clearInterval(timerInterval);
+  speechSynth.cancel();
+  document.getElementById('loadingCard').style.display = 'block';
+  document.getElementById('loadingCard').querySelector('p').textContent = 'Generating your performance report...';
+  document.getElementById('questionCard').style.display = 'none';
+  document.getElementById('micSection').style.display = 'none';
+
+  fetch('/api/complete-interview', { method: 'POST', headers: {'Content-Type':'application/json'} })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = `/report/${data.interview_id}`;
+    } else {
+      alert('Error generating report. Please try again.');
+    }
+  })
+  .catch(() => alert('Network error generating report.'));
+}
+
+function confirmEnd() {
+  if (confirm('End the interview now? Your progress will be saved and a report will be generated.')) {
+    finishInterview();
+  }
+}
+
+// ── Init ──
+startTimer();
+loadNextQuestion();
+</script>
+</body>
+</html>

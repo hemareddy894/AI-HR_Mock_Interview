@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Select your job role to begin your personalized AI HR interview.">
+<title>Select Role — AI Mock HR Interview</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-brand"><i class="fas fa-brain"></i> AI Mock HR Interview</a>
+  <div class="nav-links"><a href="/">Home</a><a href="/history">History</a></div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="progress-steps">
+      <div class="step active"><div class="step-num">1</div> Select Role</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">2</div> Upload Resume</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">3</div> AI Analysis</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">4</div> Interview</div>
+      <div class="step-divider"></div>
+      <div class="step"><div class="step-num">5</div> Report</div>
+    </div>
+
+    <div class="section-heading">
+      <h2>Select Your Interview Role</h2>
+      <p>Choose the job role you want to prepare for. Your resume will be analyzed for this role.</p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="roles-grid">
+      {% for role in roles %}
+      <div class="role-card glass-hover" data-role-id="{{ role.id }}" data-role-name="{{ role.name }}" onclick="selectRole(this)">
+        <div class="role-icon"><i class="{{ role.icon }}"></i></div>
+        <h3>{{ role.name }}</h3>
+        <p>{{ role.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;">
+      <button class="btn btn-primary btn-lg" id="continueBtn" onclick="continueToUpload()" disabled>
+        Continue <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+let selectedRoleId = null;
+
+function selectRole(el) {
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRoleId = el.dataset.roleId;
+  document.getElementById('continueBtn').disabled = false;
+}
+
+function continueToUpload() {
+  if (!selectedRoleId) {
+    showAlert('Please select a role to continue.', 'error');
+    return;
+  }
+  const btn = document.getElementById('continueBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+  fetch('/api/select-role', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({role_id: parseInt(selectedRoleId)})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '/upload-resume';
+    } else {
+      showAlert(data.error || 'Something went wrong.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+    }
+  })
+  .catch(() => {
+    showAlert('Network error. Please try again.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+  });
+}
+
+function showAlert(msg, type) {
+  const box = document.getElementById('alertBox');
+  box.innerHTML = `<div class="alert alert-${type === 'error' ? 'error' : 'info'}"><i class="fas fa-exclamation-circle"></i> ${msg}</div>`;
+  setTimeout(() => box.innerHTML = '', 4000);
+}
+</script>
+</body>
+</html>
